@@ -6,6 +6,8 @@ use strict;
 use warnings;
 use feature qw( say );
 
+use Intcode;
+
 use C02_1;
 
 # Call main if script is ran directly (eg, not loaded by another script)
@@ -22,7 +24,7 @@ sub main {
             my @prog = @input;
             $prog[1] = $noun;
             $prog[2] = $verb;
-            @prog = C02_1::eval_intcode(@prog);
+            Intcode::eval_intcode(\@prog);
             if ($prog[0] == 19690720) {
                 say 100 * $noun + $verb;
                 exit;

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-package C02_1;
+package C05_2;
 
 use strict;
 use warnings;
@@ -13,12 +13,10 @@ main() unless caller;
 
 
 sub main {
-    @ARGV = "input_02.txt" unless @ARGV;
-    my @input = split ",", <>;
-    $input[1] = 12;
-    $input[2] = 2;
+    open my $FH, '<', "input_05.txt" or die $!;
+    my @input = split ",", <$FH>;
 
-    say join ",", @{Intcode::eval_intcode(\@input)};
+    Intcode::eval_intcode(\@input, [5]);
 }
 
 1;
