@@ -7,11 +7,18 @@ use warnings;
 use feature qw( say );
 
 our $DEBUG = 0;
+our $PRINT = 0;
 
 sub eval_intcode {
-    my ($prog, $input) = @_;
+    my $prog = shift;
+    my %params = @_;
 
-    my ($pc, $input_counter) = (0,0);
+    my $input = $params{input};
+    my $pc = $params{pc} || 0;
+
+    my @output;
+    my ($input_counter) = (0);
+
     while (1) {
         my ($modes, $opcode) = $prog->[$pc] =~ /^(.*?)(.?.)$/
             or die "Invalid instruction format";
@@ -31,7 +38,7 @@ sub eval_intcode {
 
         # Mult
         elsif ($opcode == 2) {
-            say "Add ", join ",", map { "$prog->[$pc+1+$_]:$modes[$_]" } 0 .. 2 if $DEBUG;
+            say "Mul ", join ",", map { "$prog->[$pc+1+$_]:$modes[$_]" } 0 .. 2 if $DEBUG;
             my $dst = $prog->[$pc+3];
             my ($src1, $src2) = map { convert_operand($prog, $modes[$_], $pc+1+$_) } 0, 1;
             say "  -> prog[$dst] = $src1 * $src2" if $DEBUG;
@@ -43,7 +50,11 @@ sub eval_intcode {
         elsif ($opcode == 3) {
             say "Input $prog->[$pc+1]" if $DEBUG;
             my $dst = $prog->[$pc+1];
-            my $in = $input ? $input->[$input_counter++] : <>;
+            if ($input && $input_counter >= @$input) {
+                return (save_prog($prog, $pc), \@output);
+            }
+            my $in = $input ? $input->[$input_counter++] :
+                <>;
             chomp($in);
             $prog->[$dst] = $in;
             say "  -> prog[$dst] = $in" if $DEBUG;
@@ -54,13 +65,14 @@ sub eval_intcode {
         elsif ($opcode == 4) {
             say "Output ", join ",", map { "$prog->[$pc+1+$_]:$modes[$_]" } 0 if $DEBUG;
             my $src = convert_operand($prog,$modes[0],$pc+1);
-            say $src;
+            say $src if $PRINT;
+            push @output, $src;
             $pc += 2;
         }
 
         # jump-if-true
         elsif ($opcode == 5) {
-            say "Jmp-t", map { "$prog->[$pc+1+$_]:$modes[$_]" } 0 .. 1 if $DEBUG;
+            say "Jmp-t ", join ",", map { "$prog->[$pc+1+$_]:$modes[$_]" } 0 .. 1 if $DEBUG;
             my ($src, $dst) = map { convert_operand($prog, $modes[$_], $pc+1+$_) } 0, 1;
             if ($src != 0) {
                 $pc = $dst;
@@ -71,7 +83,7 @@ sub eval_intcode {
 
         # jump-if-false
         elsif ($opcode == 6) {
-            say "Jmp-f", map { "$prog->[$pc+1+$_]:$modes[$_]" } 0 .. 1 if $DEBUG;
+            say "Jmp-f ", join ",", map { "$prog->[$pc+1+$_]:$modes[$_]" } 0 .. 1 if $DEBUG;
             my ($src, $dst) = map { convert_operand($prog, $modes[$_], $pc+1+$_) } 0, 1;
             if ($src == 0) {
                 $pc = $dst;
@@ -109,7 +121,17 @@ sub eval_intcode {
             die "Unknown opcode: $prog->[$pc]";
         }
     }
-    return $prog;
+    return ($prog, \@output);
+}
+
+sub save_prog {
+    my ($prog, $pc) = @_;
+    return { prog => $prog, pc => $pc };
+}
+
+sub restore_prog {
+    my $prog_state = shift;
+    return eval_intcode($prog_state->{prog}, pc => $prog_state->{pc}, @_);
 }
 
 sub convert_operand {

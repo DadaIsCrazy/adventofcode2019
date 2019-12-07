@@ -18,7 +18,8 @@ sub main {
     $input[1] = 12;
     $input[2] = 2;
 
-    say join ",", @{Intcode::eval_intcode(\@input)};
+    Intcode::eval_intcode(\@input);
+    say join ",", @input;
 }
 
 1;

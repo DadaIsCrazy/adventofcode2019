@@ -16,7 +16,8 @@ sub main {
     open my $FH, '<', "input_05.txt" or die $!;
     my @input = split ",", <$FH>;
 
-    Intcode::eval_intcode(\@input, [5]);
+    $Intcode::PRINT = 1;
+    Intcode::eval_intcode(\@input, input => [5]);
 }
 
 1;
