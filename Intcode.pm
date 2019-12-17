@@ -142,6 +142,12 @@ sub restore_prog {
                         @_);
 }
 
+sub copy_prog {
+    my $prog_state = shift;
+    return { prog => [ @{$prog_state->{prog}} ], pc => $prog_state->{pc},
+             rel_base => $prog_state->{rel_base} };
+}
+
 sub convert_operand ($$$$) {
     my ($prog, $rel_base, $mode, $idx) = @_;
     if ($mode == 0) {
