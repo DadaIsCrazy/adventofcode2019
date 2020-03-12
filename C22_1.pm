@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-package C20_1;
+package C22_1;
 
 use strict;
 use warnings;
@@ -13,6 +13,8 @@ no warnings 'recursion';
 # Call main if script is ran directly (ie, not loaded by another script)
 main() unless caller;
 
+# Shuffles the whole deck. Good enough for part one; not even remotely
+# reasonable for part 2.
 sub shuffle {
     my ($instrs, $deck_size) = @_;
 
@@ -40,6 +42,25 @@ sub shuffle {
     }
 
     return @deck;
+}
+
+
+# Just keeps track of the card |$idx|.
+sub shuffle_fast {
+    my ($instrs, $idx, $deck_size) = @_;
+
+    for my $instr (@$instrs) {
+        if ($instr =~ /^deal into new stack/) {
+            $idx = $deck_size - 1 - $idx;
+        } elsif ($instr =~ /^cut (-?\d+)/) {
+            $idx = ($deck_size - $1 + $idx) % $deck_size;
+        } elsif ($instr =~ /^deal with increment (\d+)/) {
+            my $count = $1;
+            $idx = ($idx * $count) % $deck_size;
+        }
+    }
+
+    return $idx;
 }
 
 sub main {
@@ -72,6 +93,9 @@ cut -1";
     # say join " ", shuffle(["deal with increment 3"],10);
 
     # say join " ", shuffle([split /\n/, $input1], 10);
+    # say join " ", shuffle([(split /\n/, $input1)x2], 10);
+    # say join " ", shuffle([(split /\n/, $input1)x3], 10);
+    # say join " ", shuffle([(split /\n/, $input1)x4], 10);
     # say join " ", shuffle([split /\n/, $input2], 10);
     # say join " ", shuffle([split /\n/, $input3], 10);
     # say join " ", shuffle([split /\n/, $input4], 10);
@@ -79,7 +103,8 @@ cut -1";
     my $input = do { open my $FH, '<', 'input_22.txt' or die $!;
                      local $/;
                      <$FH>; };
-    my @deck = shuffle([split /\n/, $input], 10007);
-    my ($idx) = grep { $deck[$_] == 2019 } 0 .. $#deck;
-    say $idx;
+    # my @deck = shuffle([split /\n/, $input], 10007);
+    # my ($idx) = grep { $deck[$_] == 2019 } 0 .. $#deck;
+    # say $idx;
+    say shuffle_fast([split /\n/, $input], 2019, 10007);
 }
