@@ -24,6 +24,25 @@ sub build_patterns {
 }
 
 
+# Quite like fft, but doesn't precompute @patterns.
+sub fft_fast {
+    my @digits = split //, $_[0];
+    my @pattern = (0, 1, 0, -1);
+
+    for (1 .. $_[1]) {
+        my @new_digits;
+        for my $i (0 ..$#digits) {
+            for my $j ($i .. $#digits) {
+                $new_digits[$i] += $digits[$j] * $pattern[(($j+1)/($i+1))%4];
+            }
+            $new_digits[$i] = abs($new_digits[$i]) % 10;
+        }
+        @digits = @new_digits;
+    }
+    return substr join("", @digits), 0, 8;
+}
+
+
 sub fft {
     my @digits = split //, $_[0];
     # Note: could probably have done without build all patterns using
@@ -49,13 +68,13 @@ sub fft {
 
 sub main {
     # die unless fft('12345678', 4) == '01029498';
-    # die unless fft('80871224585914546619083218645595', 100) == 24176176;
-    # die unless fft('19617804207202209144916044189917', 100) == 73745418;
+    #die unless fft_fast('80871224585914546619083218645595', 100) == 24176176;
+    #die unless fft_fast('19617804207202209144916044189917', 100) == 73745418;
     # die unless fft('69317163492948606335995924319873', 100) == 52432133;
 
     open my $FH, '<', 'input_16.txt' or die $!;
     chomp(my $input = <$FH>);
-    say fft($input, 100);
+    say fft_fast($input, 100);
 }
 
 1;
